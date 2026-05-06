@@ -40,6 +40,7 @@ import { ConfigProvider } from "./provider"
 import { ConfigServer } from "./server"
 import { ConfigSkills } from "./skills"
 import { ConfigVariable } from "./variable"
+import { DEPLOYMENT_DEFAULTS } from "./deployment-defaults"
 import { Npm } from "@opencode-ai/core/npm"
 
 const log = Log.create({ service: "config" })
@@ -448,7 +449,7 @@ export const layer = Layer.effect(
       function* (ctx: InstanceContext) {
         const auth = yield* authSvc.all().pipe(Effect.orDie)
 
-        let result: Info = {}
+        let result: Info = mergeConfig({}, DEPLOYMENT_DEFAULTS as Info)
         const consoleManagedProviders = new Set<string>()
         let activeOrgName: string | undefined
 

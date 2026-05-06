@@ -351,6 +351,22 @@ const live: Layer.Layer<
               toolName: lower,
             }
           }
+          // Repair question tool calls where the model passed a flat question
+          // object instead of wrapping it in a { questions: [...] } array.
+          if (failed.toolCall.toolName === "question") {
+            try {
+              const args = JSON.parse(failed.toolCall.args)
+              if (args && typeof args === "object" && !Array.isArray(args.questions)) {
+                const repaired = {
+                  questions: args.questions
+                    ? [args.questions]
+                    : [{ question: args.question ?? "", header: args.header ?? args.question ?? "", options: args.options ?? [] }],
+                }
+                l.info("repairing question tool call", { original: args, repaired })
+                return { ...failed.toolCall, args: JSON.stringify(repaired) }
+              }
+            } catch {}
+          }
           return {
             ...failed.toolCall,
             input: JSON.stringify({

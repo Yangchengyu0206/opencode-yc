@@ -1505,6 +1505,8 @@ const layer: Layer.Layer<
             ...opts,
             // @ts-ignore see here: https://github.com/oven-sh/bun/issues/16682
             timeout: false,
+            // @ts-ignore Bun-specific: allow disabling TLS verification for self-signed / internal certs
+            ...(options["rejectUnauthorized"] === false ? { tls: { rejectUnauthorized: false } } : {}),
           })
 
           if (!chunkAbortCtl) return res
