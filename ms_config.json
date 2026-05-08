@@ -1,0 +1,7 @@
+{
+  "tavily_api_key": "tvly-填入你的KEY",
+
+  "teams_webhook_url": "",
+
+  "graph_access_token": ""
+}
