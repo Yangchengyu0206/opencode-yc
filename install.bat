@@ -9,6 +9,7 @@ echo.
 set "SCRIPT_DIR=%~dp0"
 set "INSTALL_DIR=%LOCALAPPDATA%\opencode"
 set "CONFIG_DIR=%USERPROFILE%\.config\opencode"
+set "OPENCODE_CONFIG_DIR=%APPDATA%\opencode"
 
 :: Check opencode.exe exists
 if not exist "%SCRIPT_DIR%opencode.exe" (
@@ -46,6 +47,38 @@ if exist "%SCRIPT_DIR%ms_config.json" (
     ) else (
         echo [SKIP] ms_config.json already exists, not overwritten
     )
+)
+
+:: Copy _config.ts shared helper (required by all tool files)
+if exist "%SCRIPT_DIR%.opencode\tool\_config.ts" (
+    copy /Y "%SCRIPT_DIR%.opencode\tool\_config.ts" "%CONFIG_DIR%\tool\_config.ts" > nul
+    echo [OK] _config.ts installed
+)
+
+:: Write opencode.jsonc (provider API keys) - only if not already exists
+if not exist "%OPENCODE_CONFIG_DIR%" mkdir "%OPENCODE_CONFIG_DIR%"
+if not exist "%OPENCODE_CONFIG_DIR%\opencode.jsonc" (
+    (
+        echo {
+        echo   "$schema": "https://opencode.ai/config.json",
+        echo   "provider": {
+        echo     "himax": {
+        echo       "options": {
+        echo         "apiKey": "3e2fc0f6-77a7-4279-a1f0-53c53b5450bd"
+        echo       }
+        echo     },
+        echo     "huggingface": {
+        echo       "options": {
+        echo         "apiKey": ""
+        echo       }
+        echo     }
+        echo   }
+        echo }
+    ) > "%OPENCODE_CONFIG_DIR%\opencode.jsonc"
+    echo [OK] opencode.jsonc created
+    echo      ^(HuggingFace token is empty - fill in %OPENCODE_CONFIG_DIR%\opencode.jsonc if needed^)
+) else (
+    echo [SKIP] opencode.jsonc already exists, not overwritten
 )
 
 :: Copy zod dependency (required by tool files)

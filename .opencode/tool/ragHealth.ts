@@ -1,6 +1,5 @@
 import { z } from "zod"
-
-const RAG_BASE_URL = "http://10.240.235.72:8000"
+import { RAG_BASE_URL } from "./_config"
 
 export default {
   description: `檢查公司 RAG 服務是否正常運行。

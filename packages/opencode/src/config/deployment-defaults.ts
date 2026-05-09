@@ -15,9 +15,9 @@ export const DEPLOYMENT_DEFAULTS = {
       name: "Himax Internal",
       npm: "@ai-sdk/openai-compatible",
       api: "https://llm.ai.himax.com.tw/v1",
-      env: [],
+      env: ["HIMAX_TOKEN"],
       options: {
-        apiKey: "3e2fc0f6-77a7-4279-a1f0-53c53b5450bd",
+        apiKey: process.env.HIMAX_TOKEN ?? "",
         baseURL: "https://llm.ai.himax.com.tw/v1",
         // Disable TLS verification for internal self-signed cert (handled in provider.ts fetch wrapper)
         rejectUnauthorized: false,

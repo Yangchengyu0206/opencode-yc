@@ -1,25 +1,7 @@
 import { z } from "zod"
-import { readFileSync } from "fs"
-import { homedir } from "os"
-import { join } from "path"
+import { MS_CONFIG_PATH, loadMsConfig, graphAuthHeaders } from "./_config"
 
-const CONFIG_PATH = join(homedir(), ".config", "opencode", "ms_config.json")
 const GRAPH_BASE = "https://graph.microsoft.com/v1.0"
-
-function loadConfig() {
-  try {
-    return JSON.parse(readFileSync(CONFIG_PATH, "utf-8"))
-  } catch {
-    return null
-  }
-}
-
-function authHeaders(config: any) {
-  return {
-    Authorization: `Bearer ${config.graph_access_token}`,
-    "Content-Type": "application/json",
-  }
-}
 
 export default {
   description: `讀取 Outlook 收件匣的最新郵件（Microsoft Graph API）。
@@ -38,11 +20,11 @@ export default {
   },
 
   async execute(args: any) {
-    const config = loadConfig()
+    const config = loadMsConfig()
     if (!config?.graph_access_token) {
-      return `[Outlook 尚未設定] 請在 ${CONFIG_PATH} 填入 graph_access_token 後再使用。`
+      return `[Outlook 尚未設定] 請在 ${MS_CONFIG_PATH} 填入 graph_access_token 後再使用。`
     }
-    const headers = authHeaders(config)
+    const headers = graphAuthHeaders(config)
 
     const top = Math.min(args.count ?? 10, 50)
     const folder = args.folder ?? "inbox"

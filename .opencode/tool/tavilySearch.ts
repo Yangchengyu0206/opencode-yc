@@ -1,18 +1,10 @@
 import { z } from "zod"
-import { readFileSync } from "fs"
-import { homedir } from "os"
-import { join } from "path"
+import { MS_CONFIG_PATH, loadMsConfig } from "./_config"
 
-const CONFIG_PATH = join(homedir(), ".config", "opencode", "ms_config.json")
 const TAVILY_URL = "https://api.tavily.com/search"
 
 function getApiKey(): string | null {
-  try {
-    const config = JSON.parse(readFileSync(CONFIG_PATH, "utf-8"))
-    return config.tavily_api_key ?? null
-  } catch {
-    return null
-  }
+  return loadMsConfig()?.tavily_api_key ?? null
 }
 
 export default {
@@ -48,7 +40,7 @@ export default {
   async execute(args: any) {
     const apiKey = getApiKey()
     if (!apiKey) {
-      return `[Tavily 尚未設定] 請在 ${CONFIG_PATH} 加入 "tavily_api_key": "tvly-..." 後再使用。\n取得 API Key：https://app.tavily.com`
+      return `[Tavily 尚未設定] 請在 ${MS_CONFIG_PATH} 加入 "tavily_api_key": "tvly-..." 後再使用。\n取得 API Key：https://app.tavily.com`
     }
 
     const body = {

@@ -1,16 +1,8 @@
 import { z } from "zod"
-import { readFileSync } from "fs"
-import { homedir } from "os"
-import { join } from "path"
-
-const CONFIG_PATH = join(homedir(), ".config", "opencode", "ms_config.json")
+import { loadMsConfig } from "./_config"
 
 function getJinaKey(): string | null {
-  try {
-    return JSON.parse(readFileSync(CONFIG_PATH, "utf-8")).jina_api_key ?? null
-  } catch {
-    return null
-  }
+  return loadMsConfig()?.jina_api_key ?? null
 }
 
 export default {

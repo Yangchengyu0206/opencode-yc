@@ -1,17 +1,5 @@
 import { z } from "zod"
-import { readFileSync } from "fs"
-import { homedir } from "os"
-import { join } from "path"
-
-const CONFIG_PATH = join(homedir(), ".config", "opencode", "ms_config.json")
-
-function loadConfig() {
-  try {
-    return JSON.parse(readFileSync(CONFIG_PATH, "utf-8"))
-  } catch {
-    return null
-  }
-}
+import { MS_CONFIG_PATH, loadMsConfig } from "./_config"
 
 export default {
   description: `傳送訊息通知到 Microsoft Teams 頻道（透過 Incoming Webhook）。
@@ -32,9 +20,9 @@ export default {
   },
 
   async execute(args: any) {
-    const config = loadConfig()
+    const config = loadMsConfig()
     if (!config || !config.teams_webhook_url) {
-      return `[Teams 尚未設定] 請建立 ${CONFIG_PATH} 並填入 teams_webhook_url 後再使用。`
+      return `[Teams 尚未設定] 請建立 ${MS_CONFIG_PATH} 並填入 teams_webhook_url 後再使用。`
     }
 
     const card: any = {

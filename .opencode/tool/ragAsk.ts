@@ -1,7 +1,5 @@
 import { z } from "zod"
-
-// RAG 服務位址（固定內網位址）
-const RAG_BASE_URL = "http://10.240.235.72:8000"
+import { RAG_BASE_URL } from "./_config"
 
 // 直接匯出符合 ToolDefinition 格式的物件，不依賴 @opencode-ai/plugin
 export default {
