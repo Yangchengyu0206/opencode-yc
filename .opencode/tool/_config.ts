@@ -20,3 +20,12 @@ export function graphAuthHeaders(config: Record<string, any>) {
     "Content-Type": "application/json",
   }
 }
+
+export const HIMAX_API_BASE = "https://llm.ai.himax.com.tw/v1"
+
+export function himaxHeaders(): Record<string, string> {
+  return {
+    Authorization: `Bearer ${process.env.HIMAX_TOKEN ?? ""}`,
+    "Content-Type": "application/json",
+  }
+}
