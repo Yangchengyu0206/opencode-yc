@@ -37,7 +37,24 @@ if not exist "%CONFIG_DIR%\skills\ocr"                  mkdir "%CONFIG_DIR%\skil
 if not exist "%CONFIG_DIR%\skills\excel"                mkdir "%CONFIG_DIR%\skills\excel"
 if not exist "%CONFIG_DIR%\skills\powerpoint"           mkdir "%CONFIG_DIR%\skills\powerpoint"
 if not exist "%CONFIG_DIR%\skills\pdf"                  mkdir "%CONFIG_DIR%\skills\pdf"
-if not exist "%CONFIG_DIR%\node_modules"                mkdir "%CONFIG_DIR%\node_modules"
+if not exist "%CONFIG_DIR%\skills\gitlab"                           mkdir "%CONFIG_DIR%\skills\gitlab"
+if not exist "%CONFIG_DIR%\skills\csv"                              mkdir "%CONFIG_DIR%\skills\csv"
+if not exist "%CONFIG_DIR%\skills\image-analysis"                   mkdir "%CONFIG_DIR%\skills\image-analysis"
+if not exist "%CONFIG_DIR%\skills\brainstorming"                    mkdir "%CONFIG_DIR%\skills\brainstorming"
+if not exist "%CONFIG_DIR%\skills\dispatching-parallel-agents"      mkdir "%CONFIG_DIR%\skills\dispatching-parallel-agents"
+if not exist "%CONFIG_DIR%\skills\executing-plans"                  mkdir "%CONFIG_DIR%\skills\executing-plans"
+if not exist "%CONFIG_DIR%\skills\finishing-a-development-branch"   mkdir "%CONFIG_DIR%\skills\finishing-a-development-branch"
+if not exist "%CONFIG_DIR%\skills\receiving-code-review"            mkdir "%CONFIG_DIR%\skills\receiving-code-review"
+if not exist "%CONFIG_DIR%\skills\requesting-code-review"           mkdir "%CONFIG_DIR%\skills\requesting-code-review"
+if not exist "%CONFIG_DIR%\skills\subagent-driven-development"      mkdir "%CONFIG_DIR%\skills\subagent-driven-development"
+if not exist "%CONFIG_DIR%\skills\systematic-debugging"             mkdir "%CONFIG_DIR%\skills\systematic-debugging"
+if not exist "%CONFIG_DIR%\skills\test-driven-development"          mkdir "%CONFIG_DIR%\skills\test-driven-development"
+if not exist "%CONFIG_DIR%\skills\using-git-worktrees"              mkdir "%CONFIG_DIR%\skills\using-git-worktrees"
+if not exist "%CONFIG_DIR%\skills\using-superpowers"                mkdir "%CONFIG_DIR%\skills\using-superpowers"
+if not exist "%CONFIG_DIR%\skills\verification-before-completion"   mkdir "%CONFIG_DIR%\skills\verification-before-completion"
+if not exist "%CONFIG_DIR%\skills\writing-plans"                    mkdir "%CONFIG_DIR%\skills\writing-plans"
+if not exist "%CONFIG_DIR%\skills\writing-skills"                   mkdir "%CONFIG_DIR%\skills\writing-skills"
+if not exist "%CONFIG_DIR%\node_modules"                            mkdir "%CONFIG_DIR%\node_modules"
 
 :: Copy ms_config.json (only if not already exists ??preserve user settings)
 if exist "%SCRIPT_DIR%ms_config.json" (
@@ -161,6 +178,56 @@ if exist "%SCRIPT_DIR%.opencode\skills\web-search\SKILL.md" (
     echo [OK] web-search skill installed
 )
 
+:: Copy GitLab tool
+if exist "%SCRIPT_DIR%.opencode\tool\gitlabSearch.ts" (
+    copy /Y "%SCRIPT_DIR%.opencode\tool\gitlabSearch.ts" "%CONFIG_DIR%\tool\gitlabSearch.ts" > nul
+    echo [OK] gitlabSearch.ts installed
+)
+if exist "%SCRIPT_DIR%.opencode\skills\gitlab\SKILL.md" (
+    copy /Y "%SCRIPT_DIR%.opencode\skills\gitlab\SKILL.md" "%CONFIG_DIR%\skills\gitlab\SKILL.md" > nul
+    echo [OK] gitlab skill installed
+)
+
+:: Copy CSV / Excel / PDF tools
+if exist "%SCRIPT_DIR%.opencode\tool\csvReader.ts" (
+    copy /Y "%SCRIPT_DIR%.opencode\tool\csvReader.ts" "%CONFIG_DIR%\tool\csvReader.ts" > nul
+    echo [OK] csvReader.ts installed
+)
+if exist "%SCRIPT_DIR%.opencode\skills\csv\SKILL.md" (
+    copy /Y "%SCRIPT_DIR%.opencode\skills\csv\SKILL.md" "%CONFIG_DIR%\skills\csv\SKILL.md" > nul
+    echo [OK] csv skill installed
+)
+if exist "%SCRIPT_DIR%.opencode\tool\excelReader.ts" (
+    copy /Y "%SCRIPT_DIR%.opencode\tool\excelReader.ts" "%CONFIG_DIR%\tool\excelReader.ts" > nul
+    echo [OK] excelReader.ts installed
+)
+if exist "%SCRIPT_DIR%.opencode\tool\pdfExtract.ts" (
+    copy /Y "%SCRIPT_DIR%.opencode\tool\pdfExtract.ts" "%CONFIG_DIR%\tool\pdfExtract.ts" > nul
+    echo [OK] pdfExtract.ts installed
+)
+
+:: Copy image analysis / OCR tools
+if exist "%SCRIPT_DIR%.opencode\tool\imageAnalyze.ts" (
+    copy /Y "%SCRIPT_DIR%.opencode\tool\imageAnalyze.ts" "%CONFIG_DIR%\tool\imageAnalyze.ts" > nul
+    echo [OK] imageAnalyze.ts installed
+)
+if exist "%SCRIPT_DIR%.opencode\tool\ocrImage.ts" (
+    copy /Y "%SCRIPT_DIR%.opencode\tool\ocrImage.ts" "%CONFIG_DIR%\tool\ocrImage.ts" > nul
+    echo [OK] ocrImage.ts installed
+)
+if exist "%SCRIPT_DIR%.opencode\skills\image-analysis\SKILL.md" (
+    copy /Y "%SCRIPT_DIR%.opencode\skills\image-analysis\SKILL.md" "%CONFIG_DIR%\skills\image-analysis\SKILL.md" > nul
+    echo [OK] image-analysis skill installed
+)
+
+:: Copy superpowers skills (xcopy to include supplementary files)
+for %%S in (brainstorming dispatching-parallel-agents executing-plans finishing-a-development-branch receiving-code-review requesting-code-review subagent-driven-development systematic-debugging test-driven-development using-git-worktrees using-superpowers verification-before-completion writing-plans writing-skills) do (
+    if exist "%SCRIPT_DIR%.opencode\skills\%%S" (
+        xcopy /E /I /Y /Q "%SCRIPT_DIR%.opencode\skills\%%S" "%CONFIG_DIR%\skills\%%S" > nul
+        echo [OK] %%S skill installed
+    )
+)
+
 :: Copy Teams / Outlook tools
 if exist "%SCRIPT_DIR%.opencode\tool\teamsNotify.ts" (
     copy /Y "%SCRIPT_DIR%.opencode\tool\teamsNotify.ts" "%CONFIG_DIR%\tool\teamsNotify.ts" > nul
@@ -177,6 +244,25 @@ if exist "%SCRIPT_DIR%.opencode\tool\outlookSend.ts" (
 if exist "%SCRIPT_DIR%.opencode\tool\outlookRead.ts" (
     copy /Y "%SCRIPT_DIR%.opencode\tool\outlookRead.ts" "%CONFIG_DIR%\tool\outlookRead.ts" > nul
     echo [OK] outlookRead.ts installed
+)
+
+:: Install optional npm packages (xlsx for excelReader, pdf-parse for pdfExtract)
+echo.
+echo Installing optional npm packages (xlsx, pdf-parse)...
+where npm > nul 2>&1
+if errorlevel 1 (
+    echo [WARN] npm not found - skipping xlsx / pdf-parse install
+    echo        Install Node.js then run: cd %CONFIG_DIR% ^&^& npm install xlsx pdf-parse
+) else (
+    cd /d "%CONFIG_DIR%"
+    call npm install xlsx pdf-parse --save-dev > nul 2>&1
+    if errorlevel 1 (
+        echo [WARN] npm install failed
+        echo        Please run manually: cd %CONFIG_DIR% ^&^& npm install xlsx pdf-parse
+    ) else (
+        echo [OK] xlsx, pdf-parse installed
+    )
+    cd /d "%SCRIPT_DIR%"
 )
 
 :: Add to user PATH
