@@ -1,0 +1,108 @@
+{
+  "project": "opencode-yc",
+  "description": "opencode fork — 整合 rag_work Q&A + agent 路由 + 每日排程流程",
+  "rules": {
+    "single_active_feature": true,
+    "passing_requires_evidence": true,
+    "status_legend": {
+      "done": "Complete — tests pass, evidence recorded",
+      "active": "Currently being worked on (max 1 at a time)",
+      "next": "Ready to start — no blockers",
+      "blocked": "Waiting on external dependency",
+      "backlog": "Planned but not yet prioritized"
+    }
+  },
+  "features": [
+    {
+      "id": "F01",
+      "name": "RAG Q&A Integration",
+      "description": "opencode 呼叫 rag_work POST /retrieval/metadata，將 RAG 結果作為 context 注入 agent 對話",
+      "week": 1,
+      "dependencies": [],
+      "status": "next",
+      "evidence": null,
+      "verification_steps": [
+        "在 opencode 對話中發問，確認 rag_work 有收到請求",
+        "確認 agent 回答有引用 rag_work 的來源"
+      ]
+    },
+    {
+      "id": "F02",
+      "name": "Agent Routing",
+      "description": "根據 query 意圖自動路由：RAG 問答 / 一般程式協助 / 排程指令",
+      "week": 2,
+      "dependencies": ["F01"],
+      "status": "backlog",
+      "evidence": null,
+      "verification_steps": [
+        "datasheet 相關問題 → 路由到 RAG",
+        "程式問題 → 直接 LLM",
+        "排程指令 → 觸發排程 flow"
+      ]
+    },
+    {
+      "id": "F03",
+      "name": "Multi-turn Conversation Memory",
+      "description": "跨 request 保留對話 context，支援代詞解析與 follow-up 問題",
+      "week": 2,
+      "dependencies": ["F01"],
+      "status": "backlog",
+      "evidence": null,
+      "verification_steps": [
+        "第一輪：問關於某 IC 的問題",
+        "第二輪：用『它』指代，確認 agent 能正確解析"
+      ]
+    },
+    {
+      "id": "F04",
+      "name": "Source Citation Display",
+      "description": "在 UI 顯示 RAG 來源引用（文件名、頁碼、相關段落）",
+      "week": 3,
+      "dependencies": ["F01", "F02"],
+      "status": "backlog",
+      "evidence": null,
+      "verification_steps": [
+        "RAG 回答後，UI 顯示來源 panel",
+        "點擊來源可展開原文段落"
+      ]
+    },
+    {
+      "id": "F05",
+      "name": "UI Enhancement",
+      "description": "優化 RAG 結果的顯示方式，區分 RAG 回答與一般 LLM 回答的視覺風格",
+      "week": 3,
+      "dependencies": ["F04"],
+      "status": "backlog",
+      "evidence": null,
+      "verification_steps": [
+        "RAG 回答有明顯的視覺標記",
+        "來源引用摺疊/展開正常"
+      ]
+    },
+    {
+      "id": "F06",
+      "name": "Daily Schedule Flow",
+      "description": "每日定時執行 agent 任務（如：每天早上摘要昨日 issue、推送通知）",
+      "week": 4,
+      "dependencies": ["F02"],
+      "status": "backlog",
+      "evidence": null,
+      "verification_steps": [
+        "設定排程後，隔天確認自動執行",
+        "執行 log 記錄在 progress.md"
+      ]
+    },
+    {
+      "id": "F07",
+      "name": "Notification System",
+      "description": "排程任務完成後發送通知（Slack / Desktop notification）",
+      "week": 4,
+      "dependencies": ["F06"],
+      "status": "backlog",
+      "evidence": null,
+      "verification_steps": [
+        "排程執行後收到 Slack 訊息或 Desktop 通知"
+      ]
+    }
+  ]
+}

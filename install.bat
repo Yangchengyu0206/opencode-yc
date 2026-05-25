@@ -96,6 +96,10 @@ if exist "%SCRIPT_DIR%.opencode\tool\ragAsk.ts" (
     copy /Y "%SCRIPT_DIR%.opencode\tool\ragAsk.ts" "%CONFIG_DIR%\tool\ragAsk.ts" > nul
     echo [OK] ragAsk.ts installed
 )
+if exist "%SCRIPT_DIR%.opencode\tool\ragHealth.ts" (
+    copy /Y "%SCRIPT_DIR%.opencode\tool\ragHealth.ts" "%CONFIG_DIR%\tool\ragHealth.ts" > nul
+    echo [OK] ragHealth.ts installed
+)
 
 :: Copy RAG skill
 if exist "%SCRIPT_DIR%.opencode\skills\rag\SKILL.md" (
@@ -179,6 +183,40 @@ if exist "%SCRIPT_DIR%.opencode\tool\outlookRead.ts" (
     echo [OK] outlookRead.ts installed
 )
 
+:: Install optional npm packages (xlsx for excelReader, pdf-parse for pdfExtract)
+echo.
+echo Installing optional npm packages (xlsx, pdf-parse)...
+where npm > nul 2>&1
+if errorlevel 1 (
+    echo [WARN] npm not found - skipping xlsx / pdf-parse install
+    echo        Install Node.js then run: cd %CONFIG_DIR% ^&^& npm install xlsx pdf-parse
+) else (
+    cd /d "%CONFIG_DIR%"
+    call npm install xlsx pdf-parse --save-dev > nul 2>&1
+    if errorlevel 1 (
+        echo [WARN] npm install failed
+        echo        Please run manually: cd %CONFIG_DIR% ^&^& npm install xlsx pdf-parse
+    ) else (
+        echo [OK] xlsx, pdf-parse installed
+    )
+    cd /d "%SCRIPT_DIR%"
+)
+
+:: Set environment variables (read from .env if present, else use defaults)
+echo.
+echo Setting environment variables...
+set "RAG_BASE_URL_VALUE=http://10.240.235.72:8000"
+set "HIMAX_TOKEN_VALUE=3e2fc0f6-77a7-4279-a1f0-53c53b5450bd"
+if exist "%SCRIPT_DIR%.env" (
+    for /f "usebackq tokens=1,* delims==" %%A in ("%SCRIPT_DIR%.env") do (
+        if /i "%%A"=="RAG_BASE_URL" set "RAG_BASE_URL_VALUE=%%B"
+        if /i "%%A"=="HIMAX_TOKEN" set "HIMAX_TOKEN_VALUE=%%B"
+    )
+)
+setx RAG_BASE_URL "%RAG_BASE_URL_VALUE%" > nul
+echo [OK] RAG_BASE_URL=%RAG_BASE_URL_VALUE%
+setx HIMAX_TOKEN "%HIMAX_TOKEN_VALUE%" > nul
+echo [OK] HIMAX_TOKEN set
 :: Add to user PATH
 echo.
 echo Updating PATH...
