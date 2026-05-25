@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:\\Users\\YANG\\AppData\\Local\\Programs\\Python\\Python313\\python.exe .claude/hooks/post_commit_update.py"
+          }
+        ]
+      }
+    ]
+  }
+}
