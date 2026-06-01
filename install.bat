@@ -24,6 +24,18 @@ if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 copy /Y "%SCRIPT_DIR%opencode.exe" "%INSTALL_DIR%\opencode.exe" > nul
 echo [OK] opencode.exe installed
 
+:: Resolve token values early (used by opencode.jsonc and setx below)
+set "RAG_BASE_URL_VALUE=http://10.240.235.72:8000"
+set "HIMAX_TOKEN_VALUE=3e2fc0f6-77a7-4279-a1f0-53c53b5450bd"
+set "HF_TOKEN_VALUE="
+if exist "%SCRIPT_DIR%.env" (
+    for /f "usebackq tokens=1,* delims==" %%A in ("%SCRIPT_DIR%.env") do (
+        if /i "%%A"=="RAG_BASE_URL" set "RAG_BASE_URL_VALUE=%%B"
+        if /i "%%A"=="HIMAX_TOKEN" set "HIMAX_TOKEN_VALUE=%%B"
+        if /i "%%A"=="HF_TOKEN" set "HF_TOKEN_VALUE=%%B"
+    )
+)
+
 :: Create config dirs
 if not exist "%CONFIG_DIR%\tool"                        mkdir "%CONFIG_DIR%\tool"
 if not exist "%CONFIG_DIR%\skills\rag"                  mkdir "%CONFIG_DIR%\skills\rag"
@@ -55,31 +67,26 @@ if exist "%SCRIPT_DIR%.opencode\tool\_config.ts" (
     echo [OK] _config.ts installed
 )
 
-:: Write opencode.jsonc (provider API keys) - only if not already exists
+:: Write opencode.jsonc (provider API keys) - always overwrite to keep keys in sync
 if not exist "%OPENCODE_CONFIG_DIR%" mkdir "%OPENCODE_CONFIG_DIR%"
-if not exist "%OPENCODE_CONFIG_DIR%\opencode.jsonc" (
-    (
-        echo {
-        echo   "$schema": "https://opencode.ai/config.json",
-        echo   "provider": {
-        echo     "himax": {
-        echo       "options": {
-        echo         "apiKey": "3e2fc0f6-77a7-4279-a1f0-53c53b5450bd"
-        echo       }
-        echo     },
-        echo     "huggingface": {
-        echo       "options": {
-        echo         "apiKey": ""
-        echo       }
-        echo     }
-        echo   }
-        echo }
-    ) > "%OPENCODE_CONFIG_DIR%\opencode.jsonc"
-    echo [OK] opencode.jsonc created
-    echo      ^(HuggingFace token is empty - fill in %OPENCODE_CONFIG_DIR%\opencode.jsonc if needed^)
-) else (
-    echo [SKIP] opencode.jsonc already exists, not overwritten
-)
+(
+    echo {
+    echo   "$schema": "https://opencode.ai/config.json",
+    echo   "provider": {
+    echo     "himax": {
+    echo       "options": {
+    echo         "apiKey": "%HIMAX_TOKEN_VALUE%"
+    echo       }
+    echo     },
+    echo     "huggingface": {
+    echo       "options": {
+    echo         "apiKey": "%HF_TOKEN_VALUE%"
+    echo       }
+    echo     }
+    echo   }
+    echo }
+) > "%OPENCODE_CONFIG_DIR%\opencode.jsonc"
+echo [OK] opencode.jsonc written (himax + huggingface keys)
 
 :: Copy zod dependency (required by tool files)
 if exist "%SCRIPT_DIR%.opencode\node_modules\zod" (
@@ -87,6 +94,7 @@ if exist "%SCRIPT_DIR%.opencode\node_modules\zod" (
     echo [OK] zod installed
 )
 
+:: Copy tools (github-triage and github-pr-search are excluded - disabled in config)
 :: Copy RAG tools
 if exist "%SCRIPT_DIR%.opencode\tool\ragSearch.ts" (
     copy /Y "%SCRIPT_DIR%.opencode\tool\ragSearch.ts" "%CONFIG_DIR%\tool\ragSearch.ts" > nul
@@ -192,45 +200,30 @@ if errorlevel 1 (
     echo        Install Node.js then run: cd %CONFIG_DIR% ^&^& npm install xlsx pdf-parse
 ) else (
     cd /d "%CONFIG_DIR%"
-    call npm install xlsx pdf-parse --save-dev > nul 2>&1
+    :: zod MUST be included - npm prunes packages not in package.json (would delete xcopied zod)
+    call npm install zod xlsx pdf-parse --save-dev > nul 2>&1
     if errorlevel 1 (
         echo [WARN] npm install failed
-        echo        Please run manually: cd %CONFIG_DIR% ^&^& npm install xlsx pdf-parse
+        echo        Please run manually: cd %CONFIG_DIR% ^&^& npm install zod xlsx pdf-parse
     ) else (
-        echo [OK] xlsx, pdf-parse installed
+        echo [OK] zod, xlsx, pdf-parse installed
     )
     cd /d "%SCRIPT_DIR%"
 )
 
-:: Set environment variables (read from .env if present, else use defaults)
+:: Set environment variables permanently (values resolved at top of script)
 echo.
 echo Setting environment variables...
-set "RAG_BASE_URL_VALUE=http://10.240.235.72:8000"
-set "HIMAX_TOKEN_VALUE=3e2fc0f6-77a7-4279-a1f0-53c53b5450bd"
-if exist "%SCRIPT_DIR%.env" (
-    for /f "usebackq tokens=1,* delims==" %%A in ("%SCRIPT_DIR%.env") do (
-        if /i "%%A"=="RAG_BASE_URL" set "RAG_BASE_URL_VALUE=%%B"
-        if /i "%%A"=="HIMAX_TOKEN" set "HIMAX_TOKEN_VALUE=%%B"
-    )
-)
 setx RAG_BASE_URL "%RAG_BASE_URL_VALUE%" > nul
 echo [OK] RAG_BASE_URL=%RAG_BASE_URL_VALUE%
 setx HIMAX_TOKEN "%HIMAX_TOKEN_VALUE%" > nul
 echo [OK] HIMAX_TOKEN set
-:: Add to user PATH
+setx HF_TOKEN "%HF_TOKEN_VALUE%" > nul
+echo [OK] HF_TOKEN set
+:: Add to user PATH (PowerShell: no 1024-char setx limit, dedupes, drops garbage)
 echo.
 echo Updating PATH...
-for /f "skip=2 tokens=3*" %%A in ('reg query "HKCU\Environment" /v PATH 2^>nul') do set "OLD_PATH=%%A %%B"
-if "%OLD_PATH%"=="" (
-    setx PATH "%INSTALL_DIR%" > nul
-) else (
-    echo %OLD_PATH% | find /i "%INSTALL_DIR%" > nul
-    if errorlevel 1 (
-        setx PATH "%OLD_PATH%;%INSTALL_DIR%" > nul
-    ) else (
-        echo [SKIP] already in PATH
-    )
-)
+powershell -NoProfile -Command "$dir='%INSTALL_DIR%'; $raw=[Environment]::GetEnvironmentVariable('PATH','User'); $seen=[System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase); $clean=@(foreach($p in ($raw -split ';')){ $t=$p.Trim(); if($t -eq ''){continue}; if($t -like '*$(*'){continue}; if($seen.Add($t)){$t} }); if(-not($clean -contains $dir)){$clean+=$dir}; [Environment]::SetEnvironmentVariable('PATH', ($clean -join ';'), 'User')"
 echo [OK] PATH updated
 
 echo.

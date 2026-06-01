@@ -8,8 +8,8 @@ export const DEPLOYMENT_DEFAULTS = {
   enabled_providers: ["himax", "huggingface"],
   model: "himax/openai/gpt-oss-120b",
   small_model: "himax/openai/gpt-oss-20b",
-  // HuggingFace fallback (used only if himax is unreachable)
-  // model: "huggingface/Qwen/Qwen2.5-72B-Instruct",
+  // HuggingFace fallback via Novita routing (no HIMAX VPN/key needed)
+  // model: "huggingface/deepseek-ai/DeepSeek-V4-Pro:novita",
   provider: {
     himax: {
       name: "Himax Internal",
@@ -17,7 +17,7 @@ export const DEPLOYMENT_DEFAULTS = {
       api: "https://llm.ai.himax.com.tw/v1",
       env: ["HIMAX_TOKEN"],
       options: {
-        apiKey: process.env.HIMAX_TOKEN ?? "",
+        apiKey: process.env.HIMAX_TOKEN || undefined,
         baseURL: "https://llm.ai.himax.com.tw/v1",
         // Disable TLS verification for internal self-signed cert (handled in provider.ts fetch wrapper)
         rejectUnauthorized: false,
@@ -62,38 +62,20 @@ export const DEPLOYMENT_DEFAULTS = {
       api: "https://router.huggingface.co/v1",
       env: ["HF_TOKEN"],
       options: {
-        apiKey: process.env.HF_TOKEN ?? "",
+        apiKey: process.env.HF_TOKEN || undefined,
         baseURL: "https://router.huggingface.co/v1",
       },
       whitelist: [
-        "Qwen/Qwen2.5-72B-Instruct",
-        "meta-llama/Llama-3.3-70B-Instruct",
-        "mistralai/Mistral-7B-Instruct-v0.3",
+        "deepseek-ai/DeepSeek-V4-Pro:novita",
       ],
       models: {
-        "Qwen/Qwen2.5-72B-Instruct": {
-          name: "Qwen2.5 72B",
+        "deepseek-ai/DeepSeek-V4-Pro:novita": {
+          name: "DeepSeek V4 Pro (Novita via HF)",
           tool_call: true,
           attachment: false,
           reasoning: false,
           temperature: true,
           limit: { context: 131072, output: 8192 },
-        },
-        "meta-llama/Llama-3.3-70B-Instruct": {
-          name: "Llama 3.3 70B",
-          tool_call: true,
-          attachment: false,
-          reasoning: false,
-          temperature: true,
-          limit: { context: 131072, output: 8192 },
-        },
-        "mistralai/Mistral-7B-Instruct-v0.3": {
-          name: "Mistral 7B",
-          tool_call: true,
-          attachment: false,
-          reasoning: false,
-          temperature: true,
-          limit: { context: 32768, output: 8192 },
         },
       },
     },

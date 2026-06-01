@@ -1,12 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "provider": {
-    "huggingface": {
-      "options": {
-        "apiKey": "{env:HF_TOKEN}",
-      },
-    },
-  },
   "permission": {
     "edit": {
       "packages/opencode/migration/*": "deny",
