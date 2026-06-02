@@ -5,22 +5,25 @@ import { RAG_BASE_URL } from "./_config"
 export default {
   description: `搜尋公司內部知識庫（RAG 系統），從向量資料庫取得相關文件片段。
 
-適用情境：
-- 查詢 IC 規格書、Datasheet、腳位定義、暫存器描述（domain: "datasheet"）
-- 查詢工程 Issue、Bug 紀錄、客訴（domain: "issue_tracker"）
+適用情境（依 domain 選擇對的庫）：
+- 「bug_list」：BugList 系統的 bug 紀錄（含 Title / Description / RootCause / Conclusion / Resolution / Workaround / RDReport / SEReport 等欄位）
+- 「issue_tracker」：工程 Issue、客訴、測試失敗紀錄
+- 「web」：內部網頁文件
+- 不填 domain：在預設 collection（規格書 / Datasheet / 技術文件）搜尋
 
 當使用者詢問以下問題時，務必使用此 tool：
-- IC 晶片規格、Datasheet、腳位、暫存器（例如 HX83192-C）
-- 工程 Issue、Bug、客訴、測試失敗紀錄
-- 公司內部技術文件
+- IC 晶片規格、Datasheet、腳位、暫存器（例如 HX83192-C）→ 不填 domain
+- 工程 Issue、客訴、測試失敗紀錄 → domain="issue_tracker"
+- 特定 Ticket / Bug 編號 / RootCause / Resolution → domain="bug_list"
+- 內部網頁 / SOP / Wiki → domain="web"
 
 回傳內容：依相關度排序的文件片段，含來源檔名與分數。
 注意：此 tool 回傳原始文件片段，由 AI 自行綜合答案；若需要完整回答請改用 ragAsk。`,
 
   args: {
     query: z.string().describe("自然語言搜尋字串，支援中文與英文"),
-    domain: z.enum(["datasheet", "issue_tracker"]).optional().describe(
-      '搜尋範圍：「datasheet」查規格書與技術文件，「issue_tracker」查工程 Issue 與 Bug 紀錄。不填則全範圍搜尋。',
+    domain: z.enum(["bug_list", "issue_tracker", "web"]).optional().describe(
+      '搜尋範圍：「bug_list」查 BugList 紀錄；「issue_tracker」查工程 Issue 與客訴；「web」查內部網頁。不填則查預設 collection（規格書 / Datasheet）。',
     ),
     top_k: z.number().optional().default(5).describe("回傳文件數量（預設 5，上限 20）"),
   },

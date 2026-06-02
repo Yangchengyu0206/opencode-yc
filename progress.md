@@ -1,7 +1,7 @@
 # Progress Log
 
 ## Last Updated
-2026-06-02 — install.bat / setup.exe 自動清舊 tool/skills 殘留 + 新增 reset-opencode.bat 核彈級清除腳本
+2026-06-02 — ragSearch 補上 bug_list / web 三庫 domain、新增 buglist skill、deploy 全量同步
 
 ## Current Objective
 完成 opencode 內部部屬鏈：跨機器一致地在 Windows 上把 himax + huggingface provider 跑起來。
@@ -13,6 +13,11 @@
 
 ## Completed (Recent)
 
+- [tool] ragSearch.ts domain enum 改 `[bug_list, issue_tracker, web]` 對齊 rag_work 真實三庫；description 補上 4 種 domain 的判斷規則
+- [skill] 新增 `.opencode/skills/buglist/SKILL.md`：BugList 專屬指引（Title/Description/RootCause/Resolution 等欄位列表 + 判斷規則表 + 範例 + 跟 issue_tracker/web 的分工）
+- [skill] 更新 `.opencode/skills/rag/SKILL.md` 為 4-domain 結構說明
+- [deploy] 用 robocopy `/E /PURGE` 鏡像同步 opencode-yc/.opencode → deploy/.opencode（3 file changed, 3508 identical, Extras=0）
+- [deploy] 重編 opencode-setup.exe（53 秒，36.7 MB）包含上述全部 skill / tool 變更
 - [deploy] install.bat 自動清空 `~/.config/opencode/tool` 與 `skills` 再重建，杜絕舊版殘留 tool 檔（如 `rag-buglist-search.ts` import 不存在的 `@opencode-ai/plugin`）害 opencode 啟動失敗
 - [deploy] opencode-setup.iss [InstallDelete] 加 `filesandordirs` 砍 `tool/` 與 `skills/` 整樹，setup.exe 每次安裝前清乾淨再重灌
 - [deploy] 新增 reset-opencode.bat 核彈級清除腳本：砍掉 binary、config、log、cache、env vars、PATH，給「懷疑這台還有怪殘留」情境用，需打 YES 確認
@@ -36,15 +41,15 @@ None — 部屬鏈修復本身完成，等用戶在另一台機器跑 setup.exe 
 
 ## Files Modified
 
-- install.bat — 加入 wipe `tool/` 與 `skills/` 邏輯（本次）+ 路徑修正 + 清舊 config（前次同 session）
-- installer/opencode-setup.iss — [InstallDelete] 加 `tool/` 與 `skills/` 整樹清除（本次）+ 安裝腳本本體（前次）
-- reset-opencode.bat — 新檔（本次，核彈級清除腳本）
-- packages/opencode/src/config/deployment-defaults.ts — DeepSeek reasoning capability（前次）
-- （產物同步）deploy\{opencode.exe, opencode-setup.exe, install.bat, reset-opencode.bat}
+- .opencode/tool/ragSearch.ts — domain enum 改 [bug_list, issue_tracker, web]
+- .opencode/skills/rag/SKILL.md — 改 4-domain 結構說明
+- .opencode/skills/buglist/SKILL.md — 新檔（BugList 專屬指引）
+- （產物同步）deploy/.opencode/tool/ragSearch.ts、deploy/.opencode/skills/{rag,buglist}/SKILL.md、deploy/opencode-setup.exe
 
 ## Recommended Next Step
 
-1. 用戶把新 `deploy\opencode-setup.exe` 拿到 904596 機器重裝，驗證 `Cannot find module '@opencode-ai/plugin'` 是否消失、DeepSeek 是否可用。
-2. 若仍卡：先跑 `reset-opencode.bat` 徹底清除再裝。
-3. 若 DeepSeek 可用：巡視 `deployment-defaults.ts` 其他模型 reasoning capability 是否標對（Qwen3-VL-32B 嫌疑最大）。
-4. 在 `packages/opencode/script/build.ts` 加 Windows PE 版本資訊（ProductName / FileDescription），讓 Task Manager / Inno Setup 不再顯示 "Bun"。
+1. **同步 rag_work 的 `.env`**：把 `QDRANT_COLLECTION_MAP` 改成 `{"bug_list": "...", "issue_tracker": "issue", "web": "web"}` 對齊 opencode ragSearch 的 enum，補上 `bug_list` 對應的 collection 名稱（看 `BUGLIST_COLLECTION` 預設）。
+2. **agent 端對端驗證**：用 `deploy\opencode-setup.exe` 裝完，丟 buglist 相關問題（如「Bug 12345 的 root cause 是什麼？」），看 agent 是否選 `domain="bug_list"`。
+3. 若 agent 沒選對 domain：在 `skills/buglist/SKILL.md` 規則表前加更強的 trigger keywords 一行。
+4. 巡視 `deployment-defaults.ts` 其他模型 reasoning capability 是否標對（Qwen3-VL-32B 嫌疑最大）。
+5. 補 `packages/opencode/script/build.ts` 加 Windows PE 版本資訊，讓 Task Manager / Inno Setup 不再顯示 "Bun"。

@@ -1,13 +1,16 @@
 ---
 name: rag
-description: 查詢公司內部知識庫（IC Datasheet、工程 Issue、客訴紀錄）
+description: 查詢公司內部知識庫（IC Datasheet、BugList、工程 Issue、內部網頁）
 ---
 
 # 公司知識庫查詢
 
-公司 RAG 系統包含兩個知識領域：
-- **datasheet**：IC 規格書、技術文件
-- **issue_tracker**：工程 Issue、Bug 紀錄、客訴
+公司 RAG 系統包含多個知識領域，透過 `ragSearch` 的 `domain` 參數選擇：
+
+- **不填 domain**：IC 規格書、Datasheet、技術文件（預設 collection）
+- **`bug_list`**：BugList 系統的 bug 紀錄（詳細欄位用法見 `buglist` skill）
+- **`issue_tracker`**：工程 Issue、客訴、測試失敗紀錄
+- **`web`**：內部網頁、SOP、Wiki
 
 ## 何時用 `ragSearch`
 
@@ -20,7 +23,7 @@ description: 查詢公司內部知識庫（IC Datasheet、工程 Issue、客訴�
 
 ```
 範例：「找 HX9200 MIPI 介面的相關規格」
-→ ragSearch(query="HX9200 MIPI", domain="datasheet")
+→ ragSearch(query="HX9200 MIPI")           ← 不填 domain，查預設規格書庫
 ```
 
 ## 何時用 `ragAsk`

@@ -133,6 +133,22 @@
         "跑新版 opencode-setup.exe 安裝後，~/.config/opencode/tool/ 只剩當前打包的 tool",
         "reset-opencode.bat 跑完後所有 opencode 相關目錄、env vars、PATH 條目都清乾淨"
       ]
+    },
+    {
+      "id": "F10",
+      "name": "BugList Domain Routing in ragSearch",
+      "description": "把 ragSearch 的 domain enum 跟 rag_work QDRANT_COLLECTION_MAP 三庫（bug_list / issue_tracker / web）對齊；新增 buglist skill 教 agent 看到 bug 相關問題時用 domain=bug_list，並把整套變更鏡像同步到 deploy",
+      "week": 0,
+      "dependencies": ["F01"],
+      "status": "done",
+      "evidence": ".opencode/tool/ragSearch.ts: domain enum 從 ['datasheet', 'issue_tracker'] 改為 ['bug_list', 'issue_tracker', 'web']，description 補上 4 種 domain（不填 / bug_list / issue_tracker / web）的判斷規則。.opencode/skills/buglist/SKILL.md 新檔：frontmatter (name=buglist) + BugList 欄位列表（Title/Description/RootCause/Conclusion/Resolution/Workaround/RDReport/SEReport/NotifyToCustomerMessage）+ 何時用的判斷規則表 + 跟 issue_tracker/web 的分工 + 2 個範例。.opencode/skills/rag/SKILL.md 從 2-domain 改 4-domain 結構說明。robocopy /E /PURGE 鏡像 .opencode → deploy/.opencode（Extras=0），重編 opencode-setup.exe。",
+      "verification_steps": [
+        "git diff 確認 ragSearch.ts enum 改為 [bug_list, issue_tracker, web]",
+        ".opencode/skills/buglist/SKILL.md 存在且 frontmatter name=buglist",
+        "deploy/.opencode 與 opencode-yc/.opencode 內容一致（robocopy Extras=0）",
+        "agent 收到「Bug XXX 的 root cause 是什麼」問題時自動選 ragSearch(domain=bug_list)",
+        "rag_work 端的 .env QDRANT_COLLECTION_MAP 需同步補上 bug_list domain（這個 repo 外）"
+      ]
     }
   ]
 }
