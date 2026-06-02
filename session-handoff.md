@@ -3,18 +3,46 @@
 > 每次 session 結束時填寫，下次 session 開始先讀這裡。
 
 ## Last Updated
-2026-06-02 — 修復 Windows 部屬路徑 bug、新增 Inno Setup 安裝包、修正 DeepSeek reasoning 設定
+2026-06-02 — install.bat / setup.exe 自動清除舊 tool/skills 殘留、新增 reset-opencode.bat 核彈級清乾淨腳本
 
 ## Current Objective
-完成 opencode 內部部屬鏈：跨機器一致地讓 DeepSeek V4 Pro (Novita via HF) 在 Windows 上能立即可用。
+完成 opencode 內部部屬鏈：跨機器一致地讓 DeepSeek V4 Pro (Novita via HF) 在 Windows 上能立即可用，且**不被舊安裝殘留檔污染**。
 
 ## Completed This Session
 
-- **install.bat 修復路徑致命 bug**：opencode (bun runtime) 在 Windows 上把 xdgConfig 解析為 `%USERPROFILE%\.config\opencode`，但原 install.bat 把 `opencode.jsonc`（API keys）寫到 `%APPDATA%\opencode\`，導致 opencode 永遠讀不到新 token、繼續沿用舊機殘留的失效 token，DeepSeek 連不上。改 `OPENCODE_CONFIG_DIR=%CONFIG_DIR%`。
-- **install.bat 主動清舊檔**：新增邏輯刪掉 `~/.config/opencode/{config.json, opencode.json}` 與 `%APPDATA%\opencode\opencode.{jsonc,json}`，避免舊安裝殘留的失效 token poison 合併後的 config。
-- **新增 Inno Setup 安裝包**：`installer/opencode-setup.iss`，編譯後產出 `opencode-setup.exe`（36.7 MB，LZMA2 壓縮）。內建 Pascal 邏輯讀 `.env`、寫 `opencode.jsonc`、設環境變數、加入 PATH。支援 `/SILENT` 給 SCCM/Intune 大量部屬。
-- **修 DeepSeek V4 Pro 模型 capability 旗標**：`deployment-defaults.ts` 把 `reasoning: false` 改 `true` 並加 `interleaved: { field: "reasoning_content" }`。原本標錯導致 opencode 不認 reasoning 串流欄位，UI 看似永遠卡住。
-- **重編 opencode.exe**（v0.0.0-test_deploy-202606020115）並同步到 `C:\Users\YANG\Desktop\deploy\`。
+- **install.bat 自動清舊 tool/skills**：每次跑 install.bat 時先 `rd /s /q "%CONFIG_DIR%\tool"` 與 `skills`，再重建。修掉用戶 904596 機器遇到的 `error: Cannot find module '@opencode-ai/plugin' from 'rag-buglist-search.ts'` —— 那是舊版 deploy 留下、新版已移除的 tool 檔，import 一個沒打包進來的 npm 模組。
+- **opencode-setup.iss 加 [InstallDelete] 砍 tool/skills 整樹**：用 `Type: filesandordirs; Name: "{%USERPROFILE}\.config\opencode\tool"` 確保每次 setup 安裝前先清空，再讓 [Files] 區段重建。保留 `ms_config.json`（用戶 API key 設定）與 `node_modules`（重建很慢）。
+- **新增 reset-opencode.bat**：獨立的核彈級清除腳本。需要打 `YES` 確認後一次砍光 `%LOCALAPPDATA%\opencode`、`~/.config/opencode`、`~/.local/share/opencode`、`~/.local/state/opencode`、`~/.cache/opencode`、`%APPDATA%\opencode`，並刪 HKCU Environment 的 HIMAX_TOKEN/HF_TOKEN/RAG_BASE_URL 與 PATH 中的 opencode 條目。給「我懷疑這台還有奇怪殘留」的情境用。
+- **重編 opencode-setup.exe**（仍 36.7 MB）並同步 install.bat / reset-opencode.bat / opencode-setup.exe 到 `deploy\`。
+
+## Verification Evidence
+
+| Check | Command | Result |
+|---|---|---|
+| install.bat 跑完無殘留 | 本機 cmd 跑 install.bat | ✅ pass — 本 session 前已驗證 |
+| Inno Setup compile | `ISCC.exe installer/opencode-setup.iss` | ✅ pass — opencode-setup.exe 成功產出 |
+| 904596 機器端對端 | 用戶用新 setup.exe 重裝 | ⚠️ pending — 待用戶實測（推薦 A 路：直接用新 setup.exe；備案 B 路：先跑 reset-opencode.bat） |
+| typecheck / unit tests | — | not run（本 session 是部屬層改動，未動 runtime 邏輯） |
+
+## Files Changed This Session
+
+- install.bat — 加入 wipe `tool/` 與 `skills/` 邏輯
+- installer/opencode-setup.iss — [InstallDelete] 加入 `tool/` 與 `skills/` 整樹清除
+- reset-opencode.bat — 新檔（獨立核彈級清除腳本）
+- （產物同步）deploy/install.bat、deploy/reset-opencode.bat、deploy/opencode-setup.exe
+
+## Blockers / Risks
+
+- **904596 機器待實測**：邏輯改完了，但本 session 沒在那台機器親自驗證。若用戶跑新 setup.exe 還有 error，要看是否還有其他舊檔（例如 `.opencode/skills/buglist/` 之類），可能需要再延伸 [InstallDelete] 範圍。
+- **`ms_config.json` 保留可能反咬**：目前 install.bat 與 setup.exe 都「只在不存在時才複製」`ms_config.json`，以保留用戶填過的 API key。但如果舊版的 ms_config.json schema 跟新版不相容，用戶會困住。長期應加版本號或 migration 邏輯。
+- **`node_modules` 累積問題**：目前 npm 安裝時 `--save-dev` 會根據當下 package.json 修剪。若舊版 package.json 有列已移除的套件，會殘留。短期不影響，長期可考慮在重灌前砍 `node_modules` 重建（代價是用戶要重新 npm install）。
+
+## Recommended Next Step
+
+1. **用戶把新 `deploy\opencode-setup.exe` 拿到 904596 機器重裝**，直接驗證 rag-buglist-search.ts 錯誤是否消失、DeepSeek 是否可用。
+2. 若仍卡：跑 `reset-opencode.bat` 徹底清除，再裝一次。
+3. 若連續有「舊版 tool import 失敗」類型 bug，把 install.bat 與 .iss 的清除範圍延伸到 `~/.config/opencode/node_modules`（代價：每次重灌都要重跑 npm install）。
+4. 補 `packages/opencode/script/build.ts` 加 Windows PE 版本資訊，讓 Task Manager / Inno Setup 不再顯示 "Bun"。
 
 ## Verification Evidence
 

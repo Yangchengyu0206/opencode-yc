@@ -119,6 +119,20 @@
         "雙擊 opencode-setup.exe 安裝後 opencode CLI 在新 terminal 可執行、能列出 huggingface/deepseek-ai/DeepSeek-V4-Pro:novita",
         "在乾淨機器（或砍掉 ~/.config/opencode 重灌）開 opencode TUI 選 DeepSeek 發訊息能看到 reasoning 與回覆"
       ]
+    },
+    {
+      "id": "F09",
+      "name": "Installer Stale-File Cleanup",
+      "description": "install.bat 與 opencode-setup.exe 每次安裝前主動清空 tool/ 與 skills/ 整樹，避免舊版安裝留下的、import 不存在 npm 模組的 tool 檔（如 rag-buglist-search.ts）害 opencode 啟動失敗；並提供獨立的 reset-opencode.bat 核彈級清除腳本給 troubleshooting 用",
+      "week": 0,
+      "dependencies": ["F08"],
+      "status": "done",
+      "evidence": "install.bat 在 mkdir 前加 'rd /s /q %CONFIG_DIR%\\tool' 與 'rd /s /q %CONFIG_DIR%\\skills'；installer/opencode-setup.iss [InstallDelete] 加 'Type: filesandordirs; Name: {%USERPROFILE}\\.config\\opencode\\tool' 與同 skills；新增 reset-opencode.bat 用 rd /s /q 砍 %LOCALAPPDATA%\\opencode、~/.config/opencode、~/.local/share/opencode、~/.local/state/opencode、~/.cache/opencode、%APPDATA%\\opencode，並用 reg delete 移除 HKCU\\Environment 的 HIMAX_TOKEN/HF_TOKEN/RAG_BASE_URL，加 PowerShell 段 dedupe PATH 移除 opencode 條目；需打 YES 確認才執行。",
+      "verification_steps": [
+        "舊機器先有 ~/.config/opencode/tool/rag-buglist-search.ts，跑新版 install.bat 後該檔不存在",
+        "跑新版 opencode-setup.exe 安裝後，~/.config/opencode/tool/ 只剩當前打包的 tool",
+        "reset-opencode.bat 跑完後所有 opencode 相關目錄、env vars、PATH 條目都清乾淨"
+      ]
     }
   ]
 }

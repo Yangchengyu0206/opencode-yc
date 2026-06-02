@@ -105,6 +105,13 @@ Type: files; Name: "{%USERPROFILE}\.config\opencode\opencode.json"
 ; Also clean the wrong-path location used by older install.bat versions
 Type: files; Name: "{userappdata}\opencode\opencode.jsonc"
 Type: files; Name: "{userappdata}\opencode\opencode.json"
+; Wipe the entire tool/ and skills/ trees before re-copying. Necessary because
+; older deploys shipped tools (e.g. rag-buglist-search.ts) that import npm packages
+; not present in current node_modules, so leftover files crash opencode on startup
+; with "Cannot find module '@opencode-ai/plugin'". Re-copy from [Files] restores the
+; current set; user-editable state (ms_config.json, node_modules/) is preserved.
+Type: filesandordirs; Name: "{%USERPROFILE}\.config\opencode\tool"
+Type: filesandordirs; Name: "{%USERPROFILE}\.config\opencode\skills"
 
 [Run]
 ; Post-install: write opencode.jsonc with API keys, set env vars (handled in [Code])

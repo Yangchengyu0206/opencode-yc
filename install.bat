@@ -38,6 +38,14 @@ if exist "%SCRIPT_DIR%.env" (
     )
 )
 
+:: Wipe stale tool/ and skills/ from any previous install.
+:: We re-copy everything afterwards, so anything left behind would just be
+:: a removed/renamed tool file (e.g. rag-buglist-search.ts importing a module
+:: that no longer ships) that breaks opencode startup with "Cannot find module".
+:: ms_config.json and node_modules are preserved (handled separately).
+if exist "%CONFIG_DIR%\tool"   rd /s /q "%CONFIG_DIR%\tool"
+if exist "%CONFIG_DIR%\skills" rd /s /q "%CONFIG_DIR%\skills"
+
 :: Create config dirs
 if not exist "%CONFIG_DIR%\tool"                        mkdir "%CONFIG_DIR%\tool"
 if not exist "%CONFIG_DIR%\skills\rag"                  mkdir "%CONFIG_DIR%\skills\rag"
