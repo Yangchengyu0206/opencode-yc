@@ -9,7 +9,9 @@ echo.
 set "SCRIPT_DIR=%~dp0"
 set "INSTALL_DIR=%LOCALAPPDATA%\opencode"
 set "CONFIG_DIR=%USERPROFILE%\.config\opencode"
-set "OPENCODE_CONFIG_DIR=%APPDATA%\opencode"
+:: opencode (bun runtime on Windows) resolves xdgConfig to %USERPROFILE%\.config,
+:: NOT %APPDATA%. Write opencode.jsonc to the same path opencode actually reads.
+set "OPENCODE_CONFIG_DIR=%CONFIG_DIR%"
 
 :: Check opencode.exe exists
 if not exist "%SCRIPT_DIR%opencode.exe" (
@@ -27,7 +29,7 @@ echo [OK] opencode.exe installed
 :: Resolve token values early (used by opencode.jsonc and setx below)
 set "RAG_BASE_URL_VALUE=http://10.240.235.72:8000"
 set "HIMAX_TOKEN_VALUE=3e2fc0f6-77a7-4279-a1f0-53c53b5450bd"
-set "HF_TOKEN_VALUE="
+set "HF_TOKEN_VALUE=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"
 if exist "%SCRIPT_DIR%.env" (
     for /f "usebackq tokens=1,* delims==" %%A in ("%SCRIPT_DIR%.env") do (
         if /i "%%A"=="RAG_BASE_URL" set "RAG_BASE_URL_VALUE=%%B"
@@ -69,6 +71,16 @@ if exist "%SCRIPT_DIR%.opencode\tool\_config.ts" (
 
 :: Write opencode.jsonc (provider API keys) - always overwrite to keep keys in sync
 if not exist "%OPENCODE_CONFIG_DIR%" mkdir "%OPENCODE_CONFIG_DIR%"
+:: Remove legacy config files that may contain stale tokens from older installs.
+:: opencode loads config.json -> opencode.json -> opencode.jsonc in order; if any of the
+:: earlier files exists with an expired token, it can still poison the merged config
+:: even when opencode.jsonc is correct. Deleting them guarantees a clean state.
+if exist "%OPENCODE_CONFIG_DIR%\config.json"   del /Q "%OPENCODE_CONFIG_DIR%\config.json"
+if exist "%OPENCODE_CONFIG_DIR%\opencode.json" del /Q "%OPENCODE_CONFIG_DIR%\opencode.json"
+:: Also clean up the wrong-path legacy install location (%APPDATA%\opencode) so opencode
+:: never accidentally reads a stale file from there if env/runtime changes the resolution.
+if exist "%APPDATA%\opencode\opencode.jsonc" del /Q "%APPDATA%\opencode\opencode.jsonc"
+if exist "%APPDATA%\opencode\opencode.json"  del /Q "%APPDATA%\opencode\opencode.json"
 (
     echo {
     echo   "$schema": "https://opencode.ai/config.json",

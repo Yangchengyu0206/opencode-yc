@@ -103,6 +103,22 @@
       "verification_steps": [
         "排程執行後收到 Slack 訊息或 Desktop 通知"
       ]
+    },
+    {
+      "id": "F08",
+      "name": "Windows Deployment & Installer",
+      "description": "讓 opencode 在 Windows 上跨機器一致部屬：修正 install.bat 路徑 bug、清舊檔殘留、提供 Inno Setup EXE 安裝包與 DeepSeek reasoning capability",
+      "week": 0,
+      "dependencies": [],
+      "status": "done",
+      "evidence": "install.bat: OPENCODE_CONFIG_DIR 改 %USERPROFILE%\\.config\\opencode（opencode/bun 在 Windows 真正讀的 xdgConfig 路徑），並新增 del 邏輯清掉 ~/.config/opencode/{config.json,opencode.json} 與 %APPDATA%\\opencode\\opencode.{jsonc,json} 殘留；installer/opencode-setup.iss 新增 Inno Setup 6 腳本，內含 Pascal Code 段讀 .env、寫 opencode.jsonc、設 HKCU Environment 環境變數、加入 PATH；產出 deploy\\opencode-setup.exe（36.7 MB，LZMA2）。packages/opencode/src/config/deployment-defaults.ts 把 DeepSeek V4 Pro:novita 從 reasoning:false 改 true 並補 interleaved:{field:reasoning_content}，opencode.exe 重編。",
+      "verification_steps": [
+        "install.bat 跑完後 ~/.config/opencode/opencode.jsonc 存在且 apiKey 為新值，~/.config/opencode/opencode.json 不存在",
+        "curl https://router.huggingface.co/v1/chat/completions 用 .env 的 HF_TOKEN 回 HTTP 200",
+        "ISCC.exe installer/opencode-setup.iss 編譯成功，產出 opencode-setup.exe",
+        "雙擊 opencode-setup.exe 安裝後 opencode CLI 在新 terminal 可執行、能列出 huggingface/deepseek-ai/DeepSeek-V4-Pro:novita",
+        "在乾淨機器（或砍掉 ~/.config/opencode 重灌）開 opencode TUI 選 DeepSeek 發訊息能看到 reasoning 與回覆"
+      ]
     }
   ]
 }
